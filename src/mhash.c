@@ -40,7 +40,6 @@ int main(int argc, char* argv[]) {
 	excl_mode = 0;
 	thread_cnt = 1;
 	seed = time(NULL) * getpid();
-	printf("seed: %d\n", seed);
 	bands = 0;
 	rows = 0;
 	
