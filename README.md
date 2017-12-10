@@ -5,7 +5,7 @@ about
 -------
 Give a database of size `N` and a query vector of dimensionality `d`, the problem of identifying exact or nearly exact matches to the query in the database takes time `Ω(Nd)`. When given another database of `M` such queries, this problem requires `Ω(NMd)` time. For large databases, this problem quickly becomes intractable.
 
-To remedy this quadratic running time, we can employ approximation methods. Locality-Sensitive Hashing (LSH) is one such method. MinHashing is an LSH scheme which defines vector similarity using the Jaccard similarity coefficient. This project provides a multithreaded implementation of MinHashing in C using the pthreads library. A great explanation both of LSH and of MinHashing (as well as numerous other fantastic topics) can be found in the amazing text [Mining of Massive Datasets](http://www.mmds.org/). 
+To remedy this quadratic running time, we can employ approximation methods. [Locality-Sensitive Hashing](https://en.wikipedia.org/wiki/Locality-sensitive_hashing) (LSH) is one such method. [MinHashing](http://gatekeeper.dec.com/ftp/pub/dec/SRC/publications/broder/positano-final-wpnums.pdf) is an LSH scheme which defines vector similarity using the [Jaccard similarity coefficient](https://en.wikipedia.org/wiki/Jaccard_index). This project provides a multithreaded implementation of MinHashing in C using the [pthreads](https://computing.llnl.gov/tutorials/pthreads/) library. A great explanation both of LSH and of MinHashing (as well as numerous other fantastic topics) can be found in the amazing text [Mining of Massive Datasets](http://www.mmds.org/). 
 
 usage
 -------
