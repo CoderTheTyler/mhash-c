@@ -144,11 +144,15 @@ int main(int argc, char* argv[]) {
 	
 	/* Free observation databases */
 	obvdb_destroy(queries);
-	if(excl_mode == 0)
+	free(queries);
+	if(excl_mode == 0) {
 		obvdb_destroy(targets);
+		free(targets);
+	}
 	
 	/* Free minhash table */
 	mhtbl_destroy(table);
+	free(table);
 	
 	/* Done! */
 	return 0;

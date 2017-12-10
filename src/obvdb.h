@@ -11,19 +11,11 @@ typedef struct {
 	uint32_t* _szs;  /* prefix sum of sizes of observations */
 } obvdb;
 
-typedef struct {
-	uint32_t* _dat;
-	uint32_t* _szs;
-} obvdb_add;
-
 /* Initializes the given pointer with a database */
 uint32_t obvdb_init(obvdb* db, FILE* src);
 
 /* Frees memory being used by this database */
 void obvdb_destroy(obvdb* db);
-
-/* Adds the given observation to this database */
-void obvdb_add(obvdb* db, uint32_t* obv, uint32_t sz);
 
 /* Dimensionality of observations in the database */
 uint32_t obvdb_dimensionality(obvdb* db);

@@ -102,7 +102,7 @@ uint32_t mhtbl_init(mhtbl* mht, obvdb* db, uint32_t bands, uint32_t rows, uint32
 	if(Ts == NULL)
 		return __MHASHTBL_ERR_NO_ALLOCATE_;
 	for(i = 0; i < bands; i++) {
-		Ts[i] = (_bkt*) malloc(Tsz * sizeof(_bkt));
+		Ts[i] = (_bkt*) calloc(Tsz, sizeof(_bkt));
 		if(Ts[i] == NULL)
 			return __MHASHTBL_ERR_NO_ALLOCATE_;
 	}
@@ -113,12 +113,12 @@ uint32_t mhtbl_init(mhtbl* mht, obvdb* db, uint32_t bands, uint32_t rows, uint32
 	 ****************************/
 	
 	/* Allocate temporary minhash signature container */
-	mhsig = (uint32_t*) malloc(rows * sizeof(uint32_t));
+	mhsig = (uint32_t*) calloc(rows, sizeof(uint32_t));
 	if(mhsig == NULL)
 		return __MHASHTBL_ERR_NO_ALLOCATE_;
 	
 	/* Allocate temporary version table */
-	sigvtbl = (uint32_t*) malloc(F * sizeof(uint32_t));
+	sigvtbl = (uint32_t*) calloc(F, sizeof(uint32_t));
 	if(sigvtbl == NULL)
 		return __MHASHTBL_ERR_NO_ALLOCATE_;
 	sigv = 1;
@@ -133,7 +133,8 @@ uint32_t mhtbl_init(mhtbl* mht, obvdb* db, uint32_t bands, uint32_t rows, uint32
 		
 		/* Hash observation i to all B minhash tables */
 		H = Hs;
-		for(b = 0, T=Ts[0]; b < bands; b++, T = Ts[b]) {
+		for(b = 0; b < bands; b++) {
+			T = Ts[b];
 			
 			/* Compute minhash signature for obv_i using H_r's  composing band b */
 			for(r = 0; r < rows; r++) {  /* evaluate H_r(obv_i) for all r */
@@ -151,7 +152,7 @@ uint32_t mhtbl_init(mhtbl* mht, obvdb* db, uint32_t bands, uint32_t rows, uint32
 			
 			/* Identify bucket in T_b to insert observation */
 			bkti = hash & (Tsz-1);
-			while(T[bkti]._sig != NULL && mhtbl_compare(rows, mhsig, T[bkti]._sig) == 0)
+			while(T[bkti]._sig && mhtbl_compare(rows, mhsig, T[bkti]._sig) == 0)
 				bkti = ((bkti + 1) & (Tsz - 1));
 			bkt = T + bkti;
 			
@@ -279,7 +280,7 @@ void* mhtbl_query_worker(void* _args) {
 	Tsz = mht->_Tsz;
 	
 	/* Allocate and initialize version tables */
-	sigvtbl = (uint32_t*) malloc(F * sizeof(uint32_t));
+	sigvtbl = (uint32_t*) calloc(F, sizeof(uint32_t));
 	if(sigvtbl == NULL)
 		exit(__MHASHTBL_ERR_NO_ALLOCATE_);
 	sigv = 1;
@@ -302,7 +303,8 @@ void* mhtbl_query_worker(void* _args) {
 			sigvtbl[obv[j]] = sigv;
 		
 		/* Hash observation i to all B minhash tables */
-		for(b = 0, T=Ts[0]; b < bands; b++, T = Ts[b]) {
+		for(b = 0; b < bands; b++) {
+			T = Ts[b];
 			
 			/* Compute minhash signature for obv_i using H_r's  composing band b */
 			H = Hs;
@@ -355,6 +357,7 @@ void* mhtbl_query_worker(void* _args) {
 		pthread_mutex_lock(prntr);
 		fprintf(outfile, "%d", i);
 		if(ccnt > 0) {
+			lastcand = -1;
 			if(cands[0] != i || exclmode == 0)
 				fprintf(outfile, ",%d", (lastcand = cands[0]));
 			for(j = 1; j < ccnt; j++) {
@@ -376,6 +379,11 @@ void* mhtbl_query_worker(void* _args) {
 			sigv = 1;
 		}
 	}
+	
+	/* Clean up! */
+	free(sigvtbl);
+	free(mhsig);
+	free(cands);
 	
 	/* Done! */
 	return NULL;
@@ -467,12 +475,15 @@ void mhtbl_destroy(mhtbl* mht) {
 	uint32_t i, j;
 	
 	/* Free used buckets */
-	for(i = 0; i < mht->_B; i++)
-		for(j = 0; j < mht->_Tsz; j++)
-			if(mht->_Ts[i][j]._sig != NULL) {
+	for(i = 0; i < mht->_B; i++) {
+		for(j = 0; j < mht->_Tsz; j++) {
+			if(mht->_Ts[i][j]._sig) {
 				free(mht->_Ts[i][j]._sig);
 				free(mht->_Ts[i][j]._obvs);
 			}
+		}
+		free(mht->_Ts[i]);
+	}
 	
 	/* Free tables and hash functions */
 	free(mht->_Ts);
