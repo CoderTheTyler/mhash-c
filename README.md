@@ -13,7 +13,7 @@ The project is built using the [`make`](http://man7.org/linux/man-pages/man1/mak
 ```
 make
 ```
-to build the project. The following command will identify all pairs of vectors in `test/test1.csv` using a single thread.
+to build the project. The following command will identify all pairs of similar vectors in `test/test1.csv` using a single thread.
 ```
 cat test/test1.csv | ./bin/mhash -b 2 -r 10 -t 1 -E
 ```
