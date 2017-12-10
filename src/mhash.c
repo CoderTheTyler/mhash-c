@@ -2,8 +2,12 @@
 #include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
+#include <time.h>
+#include <sys/types.h>
+#include <unistd.h>
 #include "obvdb.h"
 #include "mhtbl.h"
+#include "utils.h"
 
 int main(int argc, char* argv[]) {
 	
@@ -35,7 +39,8 @@ int main(int argc, char* argv[]) {
 	verbose = 0;
 	excl_mode = 0;
 	thread_cnt = 1;
-	seed = 0;
+	seed = time(NULL) * getpid();
+	printf("seed: %d\n", seed);
 	bands = 0;
 	rows = 0;
 	
