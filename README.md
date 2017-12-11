@@ -32,7 +32,7 @@ where `N` is the number of vectors in the database, `D` is the total number of f
 
 For example, `test/test1.csv` is a single database with five vectors each having 10 dimensions/features and a total of 23 features expressed across the 5 vectors (thus the header `5,23,10`). The following five lines contains describe the vectors; the first expresses four features (`0,1,2,3`), the second expresses three features (`5,7,9`), etc. The features **must** be provided in strictly increasing order. 
 
-arguments
+usage
 -------
 ```
 -b    <int>     number of bands per signature (n=r*b)         (required)
@@ -45,7 +45,7 @@ arguments
                 garbage will be thrown into standard output
 ```
 
-sources
+resources
 -------
 - [Mining of Massive Datasets](http://www.mmds.org/), J. Leskovec et al.
 - [Generic makefile](https://gist.github.com/yifanz/7161040), Yanick Rochon
