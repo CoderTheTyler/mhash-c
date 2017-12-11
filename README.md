@@ -1,4 +1,4 @@
-# mhash
+# mhash-c
 Multithreaded implementation of MinHashing in C using pthreads.
 
 about
