@@ -4,7 +4,7 @@
 #include <string.h>
 #include "obvdb.h"
 
-#define __OBVDB_BUFFER_SIZE_      1024
+#define __OBVDB_BUFFER_SIZE_      1048576
 #define __OBVDB_INIT_SUCCESS_     0
 #define __OBVDB_INIT_MALFORMED_   1
 #define __OBVDB_INIT_NO_ALLOCATE_ 2
@@ -12,24 +12,30 @@
 /* Initializes the given pointer with a database */
 uint32_t obvdb_init(obvdb* db, FILE* src) {
 	
-	uint32_t i, j, f;
+	uint32_t f;
+	uint64_t i, j;
 	
-	char ln[__OBVDB_BUFFER_SIZE_];
+	char* ln;
 	char* tkn;
 	
-	uint32_t    N;
+	uint64_t    N;
 	uint32_t    F;
-	uint32_t    M;
+	uint64_t    M;
 	uint32_t* dat;
-	uint32_t* szs;
+	uint64_t* szs;
+	
+	/* Initialize buffer to read file with */
+	ln = (char*) malloc(__OBVDB_BUFFER_SIZE_ * sizeof(char));
+	if(ln == NULL)
+		return __OBVDB_INIT_NO_ALLOCATE_;
 	
 	/* Read and parse header */
 	if(fgets(ln, __OBVDB_BUFFER_SIZE_, src) == NULL)
 		return __OBVDB_INIT_MALFORMED_;
 	tkn = strtok(ln, ",");
-	N = atoi(tkn);
+	N = atoll(tkn);
 	tkn = strtok(NULL, ",");
-	M = atoi(tkn);
+	M = atoll(tkn);
 	tkn = strtok(NULL, ",");
 	F = atoi(tkn);
 	
@@ -37,7 +43,7 @@ uint32_t obvdb_init(obvdb* db, FILE* src) {
 	dat = (uint32_t*) malloc(M * sizeof(uint32_t));
 	if(dat == NULL)
 		return __OBVDB_INIT_NO_ALLOCATE_;
-	szs = (uint32_t*) malloc(N * sizeof(uint32_t));
+	szs = (uint64_t*) malloc(N * sizeof(uint64_t));
 	if(szs == NULL)
 		return __OBVDB_INIT_NO_ALLOCATE_;
 	
@@ -52,6 +58,9 @@ uint32_t obvdb_init(obvdb* db, FILE* src) {
 			dat[j++] = atoi(tkn);
 		}
 	}
+	
+	/* Clean up! */
+	free(ln);
 	
 	/* Store parsed information in struct */
 	db->_N = N;
@@ -70,17 +79,17 @@ void obvdb_destroy(obvdb* db) {
 }
 
 /* Number of features in observation i */
-uint32_t obvdb_sz(obvdb* db, uint32_t i) {
+uint32_t obvdb_sz(obvdb* db, uint64_t i) {
 	return db->_dat[db->_szs[i]];
 }
 
 /* Pointer to data array starting at observation i */
-uint32_t* obvdb_get(obvdb* db, uint32_t i) {
+uint32_t* obvdb_get(obvdb* db, uint64_t i) {
 	return db->_dat + db->_szs[i];
 }
 
 /* Number of observations in this class */
-uint32_t obvdb_cnt(obvdb* db) {
+uint64_t obvdb_cnt(obvdb* db) {
 	return db->_N;
 }
 

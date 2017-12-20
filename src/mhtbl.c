@@ -201,6 +201,8 @@ typedef struct {
 	pthread_mutex_t* _prntr;  /* lock to use file output stream */
 	FILE*          _outfile;  /* file to print results to */
 	uint32_t      _exclmode;  /* whether or not to include matches to observations with the same index */
+	uint32_t       _noprint;  /* whether or not to print the final pairs to stdout */
+	uint32_t       _verbose;  /* whether or not to print debugging information */
 } mhthrd;
 
 void* mhtbl_query_worker(void* _args) {
@@ -240,6 +242,9 @@ void* mhtbl_query_worker(void* _args) {
 	uint32_t     ccnt;  /* number of candidate observations */
 	uint32_t lastcand;
 	uint32_t exclmode;
+	uint32_t  noprint;
+	
+	uint32_t progress;
 	
 	/* Local copy of all values */
 	args = (mhthrd*) _args;
@@ -250,6 +255,7 @@ void* mhtbl_query_worker(void* _args) {
 	prntr = args->_prntr;
 	outfile = args->_outfile;
 	exclmode = args->_exclmode;
+	noprint = args->_noprint;
 	
 	/* Local copy of minhash table values */
 	F = qdb->_F;
@@ -258,6 +264,8 @@ void* mhtbl_query_worker(void* _args) {
 	Hs = mht->_Hs;
 	Ts = mht->_Ts;
 	Tsz = mht->_Tsz;
+	
+	progress = 0;
 	
 	/* Allocate and initialize version tables */
 	sigvtbl = (uint32_t*) calloc(F, sizeof(uint32_t));
@@ -334,20 +342,29 @@ void* mhtbl_query_worker(void* _args) {
 		qsort(cands, ccnt, sizeof(uint32_t), compare);
 		
 		/* Output candidates to file */
-		pthread_mutex_lock(prntr);
-		fprintf(outfile, "%d", i);
-		if(ccnt > 0) {
-			lastcand = -1;
-			if(cands[0] != i || exclmode == 0)
-				fprintf(outfile, ",%d", (lastcand = cands[0]));
-			for(j = 1; j < ccnt; j++) {
-				if(cands[j] != lastcand && (cands[j] != i || exclmode == 0))
-					fprintf(outfile, ",%d", cands[j]);
-				lastcand = cands[j];
+		if(!noprint) {
+			pthread_mutex_lock(prntr);
+			fprintf(outfile, "%d", i);
+			if(ccnt > 0) {
+				lastcand = -1;
+				if(cands[0] != i || exclmode == 0)
+					fprintf(outfile, ",%d", (lastcand = cands[0]));
+				for(j = 1; j < ccnt; j++) {
+					if(cands[j] != lastcand && (cands[j] != i || exclmode == 0))
+						fprintf(outfile, ",%d", cands[j]);
+					lastcand = cands[j];
+				}
+			}
+			fprintf(outfile, "\n");
+			pthread_mutex_unlock(prntr);
+		}else{
+			if(0 && args->_verbose) {
+				uint32_t diff = max-min+1;
+				if(((i-min)*100) / diff > progress) {
+					printf("[INFO]    Thread %d: %d%%\n", args->_tid, ++progress);
+				}
 			}
 		}
-		fprintf(outfile, "\n");
-		pthread_mutex_unlock(prntr);
 		
 		/* Reset candidate observation list */
 		ccnt = 0;
@@ -372,7 +389,7 @@ void* mhtbl_query_worker(void* _args) {
 /** Queries the given minhash table with the observations in
  *  the given database. Identified pairs are then outputted to
  *  the specified file. */
-uint32_t mhtbl_query(mhtbl* mht, obvdb* qdb, uint32_t thrdcnt, FILE* outfile, uint32_t exclmode) {
+uint32_t mhtbl_query(mhtbl* mht, obvdb* qdb, uint32_t thrdcnt, FILE* outfile, uint32_t exclmode, uint32_t noprint, uint32_t verbose) {
 	
 	uint32_t i, t, rc;
 	
@@ -408,6 +425,8 @@ uint32_t mhtbl_query(mhtbl* mht, obvdb* qdb, uint32_t thrdcnt, FILE* outfile, ui
 		mhthrds[t]._prntr = prntr;
 		mhthrds[t]._outfile = outfile;
 		mhthrds[t]._exclmode = exclmode;
+		mhthrds[t]._noprint = noprint;
+		mhthrds[t]._verbose = verbose;
 		
 		/* Create and run thread */
 		pthread_create(&thrds[t], NULL, mhtbl_query_worker, (void*)&mhthrds[t]);

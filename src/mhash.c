@@ -19,6 +19,7 @@ int main(int argc, char* argv[]) {
 	uint32_t    verbose;
 	uint32_t  excl_mode;
 	uint32_t thread_cnt;
+	uint32_t   no_print;
 	
 	/* MinHash settings & data */
 	uint32_t bands;  /* number of bands (OR, # mhfs) */
@@ -39,6 +40,7 @@ int main(int argc, char* argv[]) {
 	verbose = 0;
 	excl_mode = 0;
 	thread_cnt = 1;
+	no_print = 0;
 	seed = time(NULL) * getpid();
 	bands = 0;
 	rows = 0;
@@ -57,6 +59,8 @@ int main(int argc, char* argv[]) {
 			excl_mode = 1;
 		else if(strcmp(argv[i],"-V") == 0)
 			verbose = 1;
+		else if(strcmp(argv[i],"--no-print") == 0)
+			no_print = 1;
 	}
 	
 	/* Verify arguments */
@@ -121,6 +125,8 @@ int main(int argc, char* argv[]) {
 	 * Build hash tables *
 	 *********************/
 	
+	if(verbose)
+		printf("[INFO]    Generating minhash tables with targets...\n");
 	table = (mhtbl*) malloc(sizeof(mhtbl));
 	if(table == NULL) {
 		printf("[ERROR]   Failed to allocate minhash tables!\n");
@@ -136,7 +142,9 @@ int main(int argc, char* argv[]) {
 	 * Lookup query observations *
 	 *****************************/
 	
-	if(mhtbl_query(table, queries, thread_cnt, stdout, excl_mode)) {
+	if(verbose)
+		printf("[INFO]    Querying minhash tables...\n");
+	if(mhtbl_query(table, queries, thread_cnt, stdout, excl_mode, no_print, verbose)) {
 		printf("[ERROR]   Failed to query minhash tables!\n");
 		return -600;
 	}

@@ -35,6 +35,6 @@ void mhtbl_destroy(mhtbl* mht);
 /** Queries the given minhash table with the observations in
  *  the given database. Identified pairs are then outputted to
  *  the specified file. */
-uint32_t mhtbl_query(mhtbl* mht, obvdb* qdb, uint32_t thrdcnt, FILE* outfile, uint32_t excl_mode);
+uint32_t mhtbl_query(mhtbl* mht, obvdb* qdb, uint32_t thrdcnt, FILE* outfile, uint32_t excl_mode, uint32_t no_print, uint32_t verbose);
 
 #endif
