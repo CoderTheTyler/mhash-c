@@ -46,12 +46,28 @@ parser.add_argument("-o",
                     dest="outpath",
                     help="path to output PNG file",
                     required=True)
+parser.add_argument("-m",
+                    action="store",
+                    type=float,
+                    dest="minb",
+                    default=0.0,
+                    help="minimum similarity bound",
+                    required=False)
+parser.add_argument("-M",
+                    action="store",
+                    type=float,
+                    dest="maxb",
+                    help="maximum similarity bound",
+                    default=1.0,
+                    required=False)
 args = parser.parse_args()
 dsetpath = args.dsetpath
 mhashpath = args.mhashpath
 nbuckets = args.nbuckets
 isexcl = args.isexcl
 outpath = args.outpath
+minb = args.minb
+maxb = args.maxb
 
 
 """ Load datasets from file """
@@ -68,8 +84,12 @@ else:
 buckets = [0.0] * nbuckets
 for i in range(d1.N):
 	for j in range(d2.N):
+		if isexcl and i == j:
+			continue
 		sim = d1.obvs[i].jaccard(d2.obvs[j])
-		b = int(nbuckets * sim)
+		if sim < minb or sim > maxb:
+			continue
+		b = int(nbuckets * (sim-minb)/(maxb-minb))
 		if b == nbuckets:
 			b = nbuckets - 1
 		buckets[b] += 1
@@ -85,7 +105,9 @@ with open(mhashpath, "r") as f:
 		i = dat[0]
 		for j in dat[1:]:
 			sim = d1.obvs[i].jaccard(d2.obvs[j])
-			b = int(nbuckets * sim)
+			if sim < minb or sim > maxb:
+				continue
+			b = int(nbuckets * (sim-minb)/(maxb-minb))
 			if b == nbuckets:
 				b = nbuckets - 1
 			ncalled[b] += 1
@@ -98,3 +120,5 @@ for b in range(nbuckets):
 		print("0.0")
 	else:
 		print(ncalled[b] / buckets[b])
+
+print("done.")

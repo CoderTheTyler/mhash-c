@@ -12,6 +12,7 @@ int compare(const void* a, const void* b) {
 
 uint32_t mhtbl_compare(uint32_t rows, uint32_t* mhs1, uint32_t* mhs2);
 uint32_t mhtbl_hash(uint32_t* mhsig, uint32_t rows);
+_bkt* mhtbl_getbucket(uint32_t rows, uint32_t F, _bkt* T, uint32_t Tsz, uint32_t* sigvtbl, uint32_t sigv, uint32_t* mhsig, uint32_t* H);
 
 /* Initializes the given minhash table. */
 uint32_t mhtbl_init(mhtbl* mht, obvdb* db, uint32_t bands, uint32_t rows, uint32_t seed) {
@@ -28,11 +29,7 @@ uint32_t mhtbl_init(mhtbl* mht, obvdb* db, uint32_t bands, uint32_t rows, uint32
 	uint32_t* sigvtbl;  /* version table used for amortized O(f) feature membership test */
 	uint32_t*   mhsig;  /* minhash signature */
 	uint32_t*     obv;  /* current observation */
-	uint32_t    obvsz;  /* size of current observation */
-	uint32_t*       H;  /* current minhash function */
-	_bkt*           T;  /* current minhash table */
-	uint32_t     hash;  /* hash of current minhash signature */
-	uint32_t     bkti;  /* bucket index current observation hashes to */
+	uint32_t      osz;  /* size of current observation */
 	_bkt*         bkt;  /* bucket in which to insert current observation */
 	uint32_t* bktobvs;  /* bucket observation index array replacement */
 	
@@ -92,54 +89,32 @@ uint32_t mhtbl_init(mhtbl* mht, obvdb* db, uint32_t bands, uint32_t rows, uint32
 	 * Hash target observations *
 	 ****************************/
 	
-	/* Allocate temporary minhash signature container */
+	/* Allocate temporary minhash signature container. */
 	mhsig = (uint32_t*) calloc(rows, sizeof(uint32_t));
 	if(mhsig == NULL)
 		return __MHASHTBL_ERR_NO_ALLOCATE_;
 	
-	/* Allocate temporary version table */
+	/* Allocate signature version table. */
 	sigvtbl = (uint32_t*) calloc(F, sizeof(uint32_t));
 	if(sigvtbl == NULL)
 		return __MHASHTBL_ERR_NO_ALLOCATE_;
 	sigv = 1;
 	
-	/* Insert hashed observations into each table */
-	obv = db->_dat;
+	/* Insert hashed observations into each table. */
 	for(i = 0; i < N; i++) {
-		obvsz = db->_szs[i];
-		/* Build lookup table to perform fast feature membership test */
-		for(j = 0; j < obvsz; j++)
+		/* Build lookup table to perform fast feature membership test. */
+		for(j = 0, obv = obvdb_getobv(db, i), osz = obvdb_obvsz(db, i); j < osz; j++)
 			sigvtbl[obv[j]] = sigv;
 		
-		/* Hash observation i to all B minhash tables */
-		H = Hs;
+		/* Hash and insert observation i to all B minhash tables. */
 		for(b = 0; b < bands; b++) {
-			T = Ts[b];
+			/* Get bucket for this observation in minhash table Ts[b]. */
+			bkt = mhtbl_getbucket(rows, F, Ts[b], Tsz, sigvtbl, sigv, mhsig, Hs);
 			
-			/* Compute minhash signature for obv_i using H_r's  composing band b */
-			for(r = 0; r < rows; r++) {  /* evaluate H_r(obv_i) for all r */
-				for(f = 0; f < F; f++) {  /* find first feature in H_r also in obv_i */
-					if(sigvtbl[H[f]] == sigv) {
-						mhsig[r] = H[f];
-						break;
-					}
-				}
-				H += F;
-			}
-			
-			/* Compute hash of minhash signature */
-			hash = mhtbl_hash(mhsig, rows);
-			
-			/* Identify bucket in T_b to insert observation */
-			bkti = hash & (Tsz-1);
-			while(T[bkti]._sig && mhtbl_compare(rows, mhsig, T[bkti]._sig) == 0)
-				bkti = ((bkti + 1) & (Tsz - 1));
-			bkt = T + bkti;
-			
-			/* Initialize bucket, if necessary */
+			/* Initialize bucket, if necessary. */
 			if(bkt->_sig == NULL) {
-				bkt->_cnt = 0;
-				bkt->_sz = __MHASHTBL_BKT_DEFAULT_SZ_;
+				bkt->_cnt = 0;  /* start with nothing in this bucket */
+				bkt->_sz = __MHASHTBL_BKT_DEFAULT_SZ_;  /* default bucket size */
 				bkt->_sig = (uint32_t*) malloc(rows * sizeof(uint32_t));
 				if(bkt->_sig == NULL)
 					return __MHASHTBL_ERR_NO_ALLOCATE_;
@@ -150,26 +125,26 @@ uint32_t mhtbl_init(mhtbl* mht, obvdb* db, uint32_t bands, uint32_t rows, uint32
 					return __MHASHTBL_ERR_NO_ALLOCATE_;
 			}
 			
-			/* Add observation to bucket */
-			if(bkt->_cnt == bkt->_sz) {  /* expand array, if necessary */
-				
-				/* Allocate new observation index array */
+			/* Add more room to bucket, if necessary. This is done by doubling
+			 * the size of the bucket. */
+			if(bkt->_cnt == bkt->_sz) {  /* expand array, if necessary. */
+				/* Allocate new observation index array. */
 				bktobvs = (uint32_t*) malloc(bkt->_sz * 2 * sizeof(uint32_t));
 				if(bktobvs == NULL)
 					return __MHASHTBL_ERR_NO_ALLOCATE_;
-				
-				/* Copy old array into new one, free old one */
+				/* Copy old array into new one, free old one. */
 				memcpy(bktobvs, bkt->_obvs, bkt->_sz * sizeof(uint32_t));
 				free(bkt->_obvs);
 				bkt->_obvs = bktobvs;
-				
-				/* Update table size counter */
+				/* Update table size. */
 				bkt->_sz *= 2;
 			}
 			bkt->_obvs[bkt->_cnt++] = i;
 		}
 		
-		/* Update signature version, reset table if needed */
+		/* Update signature version, reset table if needed. This will happen
+		 * only for very large datasets. Yields amortized O(m) feature lookup 
+		 * time. */
 		sigv += 1;
 		if(sigv == 0) {
 			memset(sigvtbl, 0, F * sizeof(uint32_t));
@@ -181,7 +156,7 @@ uint32_t mhtbl_init(mhtbl* mht, obvdb* db, uint32_t bands, uint32_t rows, uint32
 	free(sigvtbl);
 	free(mhsig);
 	
-	/* Throw everything into the provided struct */
+	/* Throw everything into the provided struct. */
 	mht->_B = bands;
 	mht->_R = rows;
 	mht->_refdb = db;
@@ -206,47 +181,47 @@ typedef struct {
 } mhthrd;
 
 void* mhtbl_query_worker(void* _args) {
-	
 	mhthrd* args;
+	
+	/* Local copy of thread arguments */
 	uint32_t           min;
 	uint32_t           max;
 	obvdb*             qdb;
 	mhtbl*             mht;
 	pthread_mutex_t* prntr;
 	FILE*          outfile;
+	uint32_t      exclmode;
+	uint32_t       noprint;
 	
+	/* Meta and misc */
+	uint32_t      progress;  /* tracks progress to print to stdout */
 	uint32_t i, j, b, r, f;
 	
-	uint32_t     hash;
-	uint32_t    obvsz;
-	uint32_t* sigvtbl;
-	uint32_t     sigv;
-	uint32_t*       H;
-	uint32_t*      Hs;
-	uint32_t      Tsz;
-	_bkt*           T;
-	_bkt**         Ts;
-	uint32_t*     obv;
-	uint32_t        F;
-	uint32_t     rows;
-	uint32_t    bands;
-	uint32_t*   mhsig;
-	uint32_t* bktobvs;
-	uint32_t   bktcnt;
-	uint32_t     bkti;
-	_bkt*         bkt;
+	/* Local copy of minhash table data */
+	uint32_t rows, bands;  /* number of rows and bands */
+	uint32_t*         Hs;  /* B hash functions */
+	_bkt**            Ts;  /* B minhash tables */
+	uint32_t         Tsz;  /* size of each of the b minhash tables */
 	
+	/* Local copy of query observation database data */
+	uint32_t        F;  /* dimensionality of observations */
+	
+	/* Odds and ends */
+	uint32_t* sigvtbl;  /* signature version table, permits fast feature
+	                       lookup and invalidation. */
+	uint32_t     sigv;  /* current version of signature version table */
+	uint32_t*   mhsig;  /* stores computed minhash signatures (one at a time) */
+	uint32_t*     obv;  /* current observation */
+	uint32_t      osz;  /* size of current observation */
+	_bkt*         bkt;  /* current bucket */
+	uint32_t   bktcnt;  /* number of observations in the current bucket */
 	uint32_t*   temps;  /* temporary list to use for reallocation of cands */
 	uint32_t*   cands;  /* list of candidate observations */
 	uint32_t      csz;  /* size of candidate list */
 	uint32_t     ccnt;  /* number of candidate observations */
-	uint32_t lastcand;
-	uint32_t exclmode;
-	uint32_t  noprint;
+	uint32_t lastcand;  /* used for eliminating duplicates when printing */
 	
-	uint32_t progress;
-	
-	/* Local copy of all values */
+	/* Local copy of thread arguments */
 	args = (mhthrd*) _args;
 	min = args->_min;
 	max = args->_max;
@@ -257,91 +232,76 @@ void* mhtbl_query_worker(void* _args) {
 	exclmode = args->_exclmode;
 	noprint = args->_noprint;
 	
-	/* Local copy of minhash table values */
-	F = qdb->_F;
+	/* Meta and misc */
+	progress = 0;
+	
+	/* Local copy of minhash table data */
 	rows = mht->_R;
 	bands = mht->_B;
 	Hs = mht->_Hs;
 	Ts = mht->_Ts;
 	Tsz = mht->_Tsz;
 	
-	progress = 0;
+	/* Local copy of query observation database data */
+	F = qdb->_F;
 	
-	/* Allocate and initialize version tables */
+	/* Allocate and initialize signature version table. */
 	sigvtbl = (uint32_t*) calloc(F, sizeof(uint32_t));
 	if(sigvtbl == NULL)
 		exit(__MHASHTBL_ERR_NO_ALLOCATE_);
-	sigv = 1;
+	sigv = 1;  /* table initialized to 0, need first version to be non-zero. */
+	
+	/* Allocate space to store computed minhash signatures. */
 	mhsig = (uint32_t*) malloc(rows * sizeof(uint32_t));
 	if(mhsig == NULL)
 		exit(__MHASHTBL_ERR_NO_ALLOCATE_);
 	
-	/* Allocate and initialize candidate observation list */
-	csz = 16;
-	ccnt = 0;
+	/* Allocate and initialize candidate observation list. */
+	csz = 16;  /* initial default size */
+	ccnt = 0;  /* no candidates initially */
 	cands = (uint32_t*) malloc(csz * sizeof(uint32_t));
 	if(cands == NULL)
 		exit(__MHASHTBL_ERR_NO_ALLOCATE_);
 	
-	obv = qdb->_dat;
+	/* Vacation's over! Thread starts actual work! */
 	for(i = min; i < max; i++) {
-		obvsz = qdb->_szs[i];
-		/* Build lookup table to perform fast feature membership test */
-		for(j = 0; j < obvsz; j++)
+		/* Build lookup table to perform fast feature membership test. */
+		for(j = 0, obv = obvdb_getobv(qdb, i), osz = obvdb_obvsz(qdb, i); j < osz; j++)
 			sigvtbl[obv[j]] = sigv;
 		
-		/* Hash observation i to all B minhash tables */
+		/* Hash observation i to all B minhash tables. */
 		for(b = 0; b < bands; b++) {
-			T = Ts[b];
+			/* Identify bucket this band of the observation maps to. */
+			bkt = mhtbl_getbucket(rows, F, Ts[b], Tsz, sigvtbl, sigv, mhsig, Hs);
 			
-			/* Compute minhash signature for obv_i using H_r's  composing band b */
-			H = Hs;
-			for(r = 0; r < rows; r++) {  /* evaluate H_r(obv_i) for all r */
-				for(f = 0; f < F; f++) {  /* find first feature in H_r also in obv_i */
-					if(sigvtbl[H[f]] == sigv) {
-						mhsig[r] = H[f];
-						break;
-					}
-				}
-				H += F;
-			}
-			
-			/* Compute hash of minhash signature */
-			hash = mhtbl_hash(mhsig, rows);
-			
-			/* Identify bucket in T_b to insert observation */
-			bkti = hash & (Tsz-1);
-			while(T[bkti]._sig != NULL && mhtbl_compare(rows, mhsig, T[bkti]._sig) == 0)
-				bkti = ((bkti + 1) & (Tsz - 1));
-			bkt = T + bkti;
-			bktobvs = bkt->_obvs;
-			
-			/* If signature maps to a bucket, merge observations with existing candidates */
-			if(bktobvs != NULL) {
+			/* If observation band maps to a bucket, merge observations with 
+			 * existing candidates. Expand existing candidate list, if 
+			 * necessary.*/
+			if(bkt->_obvs != NULL) {
 				bktcnt = bkt->_cnt;
 				
-				/* Expand candidate array to fit new observations */
+				/* Expand candidate array to fit new observations. */
 				if(bktcnt+ccnt >= csz) {
-					temps = (uint32_t*) malloc((ccnt + bktcnt) * 2 * sizeof(uint32_t));
+					csz = (ccnt + bktcnt) * 2;  /* guarantees new obvs will fit plus some */
+					temps = (uint32_t*) malloc(csz * sizeof(uint32_t));
 					if(temps == NULL)
 						exit(__MHASHTBL_ERR_NO_ALLOCATE_);
 					memcpy(temps, cands, ccnt * sizeof(uint32_t));
 					free(cands);
 					cands = temps;
-					csz = (ccnt + bktcnt) * 2;  /* guarantees new obvs will fit plus some */
 				}
 				
-				/* Copy bucket observations into candidate array */
+				/* Copy bucket observations into candidate array. */
 				for(j = 0; j < bktcnt; j++)
-					cands[j+ccnt] = bktobvs[j];
+					cands[j+ccnt] = bkt->_obvs[j];
 				ccnt += bktcnt;
 			}
 		}
 		
-		/* Sort candidate observations */
+		/* Sort candidate observations. */
 		qsort(cands, ccnt, sizeof(uint32_t), compare);
 		
-		/* Output candidates to file */
+		/* Print out final results. */
 		if(!noprint) {
 			pthread_mutex_lock(prntr);
 			fprintf(outfile, "%d", i);
@@ -358,7 +318,7 @@ void* mhtbl_query_worker(void* _args) {
 			fprintf(outfile, "\n");
 			pthread_mutex_unlock(prntr);
 		}else{
-			if(0 && args->_verbose) {
+			if(args->_verbose) {
 				uint32_t diff = max-min+1;
 				if(((i-min)*100) / diff > progress) {
 					printf("[INFO]    Thread %d: %d%%\n", args->_tid, ++progress);
@@ -366,13 +326,13 @@ void* mhtbl_query_worker(void* _args) {
 			}
 		}
 		
-		/* Reset candidate observation list */
+		/* Reset candidate observation list. */
 		ccnt = 0;
 		
-		/* Update signature version, reset table if needed */
-		sigv += 1;
+		/* Update signature version, reset table if needed. */
+		sigv += 1;  /* invalidates previous observation features */
 		if(sigv == 0) {
-			memset(sigvtbl, 0, F * sizeof(uint32_t));  /* okay, amortized linear time... */
+			memset(sigvtbl, 0, F * sizeof(uint32_t));
 			sigv = 1;
 		}
 	}
@@ -383,7 +343,7 @@ void* mhtbl_query_worker(void* _args) {
 	free(cands);
 	
 	/* Done! */
-	return NULL;
+	pthread_exit(NULL);
 }
 
 /** Queries the given minhash table with the observations in
@@ -414,8 +374,7 @@ uint32_t mhtbl_query(mhtbl* mht, obvdb* qdb, uint32_t thrdcnt, FILE* outfile, ui
 	/* Initialize threads */
 	pthread_mutex_init(prntr, NULL);  /* use default mutex attribs */
 	i = 0;
-	for(t = 0; t < thrdcnt; t++) {
-		
+	for(t = 0; t < thrdcnt; t++) {		
 		/* Initialize thread arguments */
 		mhthrds[t]._tid = t;
 		mhthrds[t]._min = i;
@@ -448,8 +407,36 @@ uint32_t mhtbl_query(mhtbl* mht, obvdb* qdb, uint32_t thrdcnt, FILE* outfile, ui
 	return __MHASHTBL_ERR_SUCCESS_;
 }
 
-/* Compares two minhash signatures, used for comparing
- * signatures when inserting/getting obvs from mhtbls */
+/* Returns the bucket that the given observation maps to. The observation data
+ * must be stored in the signature version table. Will return NULL if no bucket
+ * exists which maps to the computed minhash signature. */
+_bkt* mhtbl_getbucket(uint32_t rows, uint32_t F, _bkt* T, uint32_t Tsz, uint32_t* sigvtbl, uint32_t sigv, uint32_t* mhsig, uint32_t* H) {
+	uint32_t r, f, hash, bkti;
+	
+	/* Compute minhash signature for obv_i using H_r's  composing band b */
+	for(r = 0; r < rows; r++) {  /* evaluate H_r(obv_i) for all r */
+		for(f = 0; f < F; f++) {  /* find first feature in H_r also in obv_i */
+			if(sigvtbl[H[f]] == sigv) {
+				mhsig[r] = H[f];
+				break;
+			}
+		}
+		H += F;
+	}
+	
+	/* Compute hash of minhash signature */
+	hash = mhtbl_hash(mhsig, rows);
+	
+	/* Identify bucket in T_b to insert observation */
+	bkti = hash & (Tsz-1);
+	while(T[bkti]._sig != NULL && !mhtbl_compare(rows, mhsig, T[bkti]._sig))
+		bkti = ((bkti + 1) & (Tsz - 1));
+	return T + bkti;
+}
+
+/* Compares two minhash signatures, used for comparing signatures when 
+ * inserting/getting obvs from mhtbls. Requires O(R) time, where R is the 
+ * number of rows per band. */
 uint32_t mhtbl_compare(uint32_t rows, uint32_t* mhs1, uint32_t* mhs2) {
 	uint32_t i;
 	for(i = 0; i < rows; i++)
@@ -458,11 +445,10 @@ uint32_t mhtbl_compare(uint32_t rows, uint32_t* mhs1, uint32_t* mhs2) {
 	return 1;
 }
 
-/* Computes the hash of a given minhash signature */
-/* Same as Java hashCode() */
+/* Computes the hash of a given minhash signature, same as Java hashCode(). */
 uint32_t mhtbl_hash(uint32_t* mhsig, uint32_t rows) {
 	uint32_t hash, r;
-	hash = 0;
+	hash = 7;
 	for(r = 0; r < rows; r++)
 		hash = (hash << 5) - hash + mhsig[r];
 	return hash;
