@@ -45,8 +45,9 @@ parser.add_argument("-o",
                     action="store", 
                     type=str, 
                     dest="outpath",
+                    default=None,
                     help="path to output PNG file",
-                    required=True)
+                    required=False)
 parser.add_argument("-m",
                     action="store",
                     type=float,
@@ -69,6 +70,15 @@ isexcl = args.isexcl
 outpath = args.outpath
 minb = args.minb
 maxb = args.maxb
+
+
+""" Load plotting library, if necessary """
+if not outpath is None:
+	import matplotlib as mpl
+	# Don't require a display device
+	# Stolen from: https://stackoverflow.com/a/4935945
+	mpl.use('Agg')
+	import matplotlib.pyplot as plt
 
 
 """ Load datasets from file """
@@ -94,7 +104,7 @@ for i in range(d1.N):
 		if b == nbuckets:
 			b -= 1
 		buckets[b] += 1
-print(buckets)
+
 
 """ Count number of pairs in each bucket called by mhash """
 ncalled = [0.0] * nbuckets
@@ -115,11 +125,23 @@ with open(mhashpath, "r") as f:
 		ln = f.readline()
 
 
-""" Output graph """
+""" Output graph and print data table """
+x = [b for b in range(nbuckets)]
+s = ["{}:{}".format(minb+b*(maxb-minb)/nbuckets, minb+(b+1)*(maxb-minb)/nbuckets) for b in range(nbuckets)]
+ps = [0.0] * nbuckets
 for b in range(nbuckets):
 	if buckets[b] == 0:
-		print("0.0")
+		ps[b] = 0.0
 	else:
-		print(ncalled[b] / buckets[b])
+		ps[b] = ncalled[b] / buckets[b]
+print("similarity,proportion,called,total")
+for i in range(len(ps)):
+	print("{},{},{},{}".format(s[i], ps[i], ncalled[i], buckets[i]))
+if not outpath is None:
+	plt.plot(x,ps)
+	plt.ylim(0.0,1.0)
+	plt.xticks(x,s,rotation="vertical")
+	plt.subplots_adjust(bottom=0.05)
+	plt.savefig(outpath, bbox_inches="tight")
 
 print("done.")
