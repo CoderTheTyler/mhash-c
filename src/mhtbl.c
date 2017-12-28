@@ -14,7 +14,23 @@ uint32_t mhtbl_compare(uint32_t rows, uint32_t* mhs1, uint32_t* mhs2);
 uint32_t mhtbl_hash(uint32_t* mhsig, uint32_t rows);
 _bkt* mhtbl_getbucket(uint32_t rows, uint32_t F, _bkt* T, uint32_t Tsz, uint32_t* sigvtbl, uint32_t sigv, uint32_t* mhsig, uint32_t* H);
 
-/* Initializes the given minhash table. */
+uint32_t bkt_init(_bkt* bkt, uint32_t* mhsig, uint32_t rows) {
+	bkt->_cnt = 0;  /* start with nothing in this bucket */
+	bkt->_sz = __MHASHTBL_BKT_DEFAULT_SZ_;  /* default bucket size */
+	bkt->_sig = (uint32_t*) malloc(rows * sizeof(uint32_t));
+	if(bkt->_sig == NULL)
+		return __MHASHTBL_ERR_NO_ALLOCATE_;
+	
+	/* Copy signature into new bucket, will act as bucket identifier */
+	memcpy(bkt->_sig, mhsig, rows * sizeof(uint32_t));
+	bkt->_obvs = (uint32_t*) malloc(bkt->_sz * sizeof(uint32_t));
+	if(bkt->_obvs == NULL)
+		return __MHASHTBL_ERR_NO_ALLOCATE_;
+	
+	/* Done! */
+	return 0;
+}
+
 uint32_t mhtbl_init(mhtbl* mht, obvdb* db, uint32_t bands, uint32_t rows, uint32_t seed) {
 	
 	uint32_t i, j, k, r, b, f, temp;
@@ -109,21 +125,11 @@ uint32_t mhtbl_init(mhtbl* mht, obvdb* db, uint32_t bands, uint32_t rows, uint32
 		/* Hash and insert observation i to all B minhash tables. */
 		for(b = 0; b < bands; b++) {
 			/* Get bucket for this observation in minhash table Ts[b]. */
-			bkt = mhtbl_getbucket(rows, F, Ts[b], Tsz, sigvtbl, sigv, mhsig, Hs);
+			bkt = mhtbl_getbucket(rows, F, Ts[b], Tsz, sigvtbl, sigv, mhsig, Hs+b*rows*F);
 			
 			/* Initialize bucket, if necessary. */
-			if(bkt->_sig == NULL) {
-				bkt->_cnt = 0;  /* start with nothing in this bucket */
-				bkt->_sz = __MHASHTBL_BKT_DEFAULT_SZ_;  /* default bucket size */
-				bkt->_sig = (uint32_t*) malloc(rows * sizeof(uint32_t));
-				if(bkt->_sig == NULL)
-					return __MHASHTBL_ERR_NO_ALLOCATE_;
-				/* Copy signature into new bucket, will act as bucket identifier */
-				memcpy(bkt->_sig, mhsig, rows * sizeof(uint32_t));
-				bkt->_obvs = (uint32_t*) malloc(bkt->_sz * sizeof(uint32_t));
-				if(bkt->_obvs == NULL)
-					return __MHASHTBL_ERR_NO_ALLOCATE_;
-			}
+			if(bkt->_sig == NULL)
+				bkt_init(bkt, mhsig, rows);
 			
 			/* Add more room to bucket, if necessary. This is done by doubling
 			 * the size of the bucket. */
@@ -272,7 +278,7 @@ void* mhtbl_query_worker(void* _args) {
 		/* Hash observation i to all B minhash tables. */
 		for(b = 0; b < bands; b++) {
 			/* Identify bucket this band of the observation maps to. */
-			bkt = mhtbl_getbucket(rows, F, Ts[b], Tsz, sigvtbl, sigv, mhsig, Hs);
+			bkt = mhtbl_getbucket(rows, F, Ts[b], Tsz, sigvtbl, sigv, mhsig, Hs+b*rows*F);
 			
 			/* If observation band maps to a bucket, merge observations with 
 			 * existing candidates. Expand existing candidate list, if 

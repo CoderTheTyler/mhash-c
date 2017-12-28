@@ -1,3 +1,5 @@
+from sys import stdout
+
 class Observation:
 	"""Stores data for a well set loaded from an OFVF."""
 	def __init__ (self, m, fs):
@@ -8,6 +10,11 @@ class Observation:
 		I = float(len(set(other.fs) & set(self.fs)))
 		U = float(len(set(other.fs) | set(self.fs)))
 		return I / U
+	
+	def show (self):
+		for f in self.fs:
+			stdout.write("{},".format(f))
+		stdout.write("\n")
 
 class Dataset:
 	def __init__ (self, F):

@@ -12,6 +12,7 @@ import os
 import random
 from mhashtest import Dataset, Observation
 import argparse
+from math import floor
 
 
 """ Parse program arguments """
@@ -89,9 +90,9 @@ for i in range(d1.N):
 		sim = d1.obvs[i].jaccard(d2.obvs[j])
 		if sim < minb or sim > maxb:
 			continue
-		b = int(nbuckets * (sim-minb)/(maxb-minb))
+		b = int(floor(nbuckets * (sim-minb)/(maxb-minb)))
 		if b == nbuckets:
-			b = nbuckets - 1
+			b -= 1
 		buckets[b] += 1
 print(buckets)
 
@@ -107,9 +108,9 @@ with open(mhashpath, "r") as f:
 			sim = d1.obvs[i].jaccard(d2.obvs[j])
 			if sim < minb or sim > maxb:
 				continue
-			b = int(nbuckets * (sim-minb)/(maxb-minb))
+			b = int(floor(nbuckets * (sim-minb)/(maxb-minb)))
 			if b == nbuckets:
-				b = nbuckets - 1
+				b -= 1
 			ncalled[b] += 1
 		ln = f.readline()
 
