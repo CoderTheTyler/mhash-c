@@ -61,8 +61,9 @@ usage
 -t    <int>     number of threads to use                      (default: 1)
 -E              enables exclusive comparison mode, prevents
                 observations with the same index being paired
--V              enables verbosity, i.e. a bunch of debugging
+--verbose       enables verbosity, i.e. a bunch of debugging
                 garbage will be thrown into standard output
+--no-print      pairing results will not be sent to stdout
 ```
 
 
