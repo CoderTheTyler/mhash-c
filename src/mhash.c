@@ -57,7 +57,7 @@ int main(int argc, char* argv[]) {
 			seed = atoi(argv[++i]);
 		else if(strcmp(argv[i],"-E") == 0)
 			excl_mode = 1;
-		else if(strcmp(argv[i],"-V") == 0)
+		else if(strcmp(argv[i],"--verbose") == 0)
 			verbose = 1;
 		else if(strcmp(argv[i],"--no-print") == 0)
 			no_print = 1;

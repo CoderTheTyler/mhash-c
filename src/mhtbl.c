@@ -86,6 +86,7 @@ uint32_t mhtbl_init(mhtbl* mht, obvdb* db, uint32_t bands, uint32_t rows, uint32
 	 *************************/
 	
 	/* Compute static size of minhash tables */
+	/* No need to include/link math library for one little logarithm.. */
 	Tsz = 2;
 	while(Tsz <= N / __MHASHTBL_LOAD_FACTOR_)
 		Tsz *= 2;
@@ -479,5 +480,4 @@ void mhtbl_destroy(mhtbl* mht) {
 	/* Free tables and hash functions */
 	free(mht->_Ts);
 	free(mht->_Hs);
-	
 }
