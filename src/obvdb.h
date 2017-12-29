@@ -6,7 +6,7 @@
 
 typedef struct {
 	uint32_t      _F;  /* number of feature dimensions */
-	uint64_t      _N;  /* number of observations */
+	uint32_t      _N;  /* number of observations */
 	uint32_t*   _dat;  /* features in each observation */
 	uint64_t* _szpfx;  /* prefix sum of sizes of observations */
 } obvdb;
@@ -21,12 +21,12 @@ void obvdb_destroy(obvdb* db);
 uint32_t obvdb_dimensionality(obvdb* db);
 
 /* Number of features in observation i */
-uint32_t obvdb_obvsz(obvdb* db, uint64_t i);
+uint32_t obvdb_obvsz(obvdb* db, uint32_t i);
 
 /* Return pointer to i-th observation in this database */
-uint32_t* obvdb_getobv(obvdb* db, uint64_t i);
+uint32_t* obvdb_getobv(obvdb* db, uint32_t i);
 
-/* Number of observations in this class */
-uint64_t obvdb_cnt(obvdb* db);
+/* Number of observations in this database */
+uint32_t obvdb_cnt(obvdb* db);
 
 #endif

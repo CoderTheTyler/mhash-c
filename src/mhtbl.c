@@ -7,7 +7,7 @@
 #include "utils.h"
 
 int compare(const void* a, const void* b) {
-	return ((*((int*)a) > *((int*)b)) - (*((int*)a) < *((int*)b)));
+	return ((*((uint32_t*)a) > *((uint32_t*)b)) - (*((uint32_t*)a) < *((uint32_t*)b)));
 }
 
 uint32_t mhtbl_compare(uint32_t rows, uint32_t* mhs1, uint32_t* mhs2);
@@ -54,9 +54,9 @@ uint32_t mhtbl_init(mhtbl* mht, obvdb* db, uint32_t bands, uint32_t rows, uint32
 	N = obvdb_cnt(db);
 	
 	
-	/******************************
-	 * Generate minhash functions *
-	 ******************************/
+	/****************************************
+	 * Generate minhash functions, O(B*R*F) *
+	 ****************************************/
 	
 	/* Allocate minhash function array */
 	Hs = (uint32_t*) malloc((bands * rows * F) * sizeof(uint32_t));
@@ -264,11 +264,13 @@ void* mhtbl_query_worker(void* _args) {
 		exit(__MHASHTBL_ERR_NO_ALLOCATE_);
 	
 	/* Allocate and initialize candidate observation list. */
-	csz = 16;  /* initial default size */
-	ccnt = 0;  /* no candidates initially */
-	cands = (uint32_t*) malloc(csz * sizeof(uint32_t));
-	if(cands == NULL)
-		exit(__MHASHTBL_ERR_NO_ALLOCATE_);
+	if(!noprint) {
+		csz = 16;  /* initial default size */
+		ccnt = 0;  /* no candidates initially */
+		cands = (uint32_t*) malloc(csz * sizeof(uint32_t));
+		if(cands == NULL)
+			exit(__MHASHTBL_ERR_NO_ALLOCATE_);
+	}
 	
 	/* Vacation's over! Thread starts actual work! */
 	for(i = min; i < max; i++) {
@@ -287,26 +289,29 @@ void* mhtbl_query_worker(void* _args) {
 			if(bkt->_obvs != NULL) {
 				bktcnt = bkt->_cnt;
 				
-				/* Expand candidate array to fit new observations. */
-				if(bktcnt+ccnt >= csz) {
-					csz = (ccnt + bktcnt) * 2;  /* guarantees new obvs will fit plus some */
-					temps = (uint32_t*) malloc(csz * sizeof(uint32_t));
-					if(temps == NULL)
-						exit(__MHASHTBL_ERR_NO_ALLOCATE_);
-					memcpy(temps, cands, ccnt * sizeof(uint32_t));
-					free(cands);
-					cands = temps;
+				if(!noprint) {
+					/* Expand candidate array to fit new observations. */
+					if(bktcnt+ccnt >= csz) {
+						csz = (ccnt + bktcnt) * 2;  /* guarantees new obvs will fit plus some */
+						temps = (uint32_t*) malloc(csz * sizeof(uint32_t));
+						if(temps == NULL)
+							exit(__MHASHTBL_ERR_NO_ALLOCATE_);
+						memcpy(temps, cands, ccnt * sizeof(uint32_t));
+						free(cands);
+						cands = temps;
+					}
+					
+					/* Copy bucket observations into candidate array. */
+					for(j = 0; j < bktcnt; j++)
+						cands[j+ccnt] = bkt->_obvs[j];
+					ccnt += bktcnt;
 				}
-				
-				/* Copy bucket observations into candidate array. */
-				for(j = 0; j < bktcnt; j++)
-					cands[j+ccnt] = bkt->_obvs[j];
-				ccnt += bktcnt;
 			}
 		}
 		
 		/* Sort candidate observations. */
-		qsort(cands, ccnt, sizeof(uint32_t), compare);
+		if(!noprint)
+			qsort(cands, ccnt, sizeof(uint32_t), compare);
 		
 		/* Print out final results. */
 		if(!noprint) {
@@ -347,7 +352,8 @@ void* mhtbl_query_worker(void* _args) {
 	/* Clean up! */
 	free(sigvtbl);
 	free(mhsig);
-	free(cands);
+	if(!noprint)
+		free(cands);
 	
 	/* Done! */
 	pthread_exit(NULL);
@@ -422,12 +428,11 @@ _bkt* mhtbl_getbucket(uint32_t rows, uint32_t F, _bkt* T, uint32_t Tsz, uint32_t
 	
 	/* Compute minhash signature for obv_i using H_r's  composing band b */
 	for(r = 0; r < rows; r++) {  /* evaluate H_r(obv_i) for all r */
-		for(f = 0; f < F; f++) {  /* find first feature in H_r also in obv_i */
+		for(f = 0; f < F; f++)   /* find first feature in H_r also in obv_i */
 			if(sigvtbl[H[f]] == sigv) {
 				mhsig[r] = H[f];
 				break;
 			}
-		}
 		H += F;
 	}
 	

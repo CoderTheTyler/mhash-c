@@ -41,14 +41,23 @@ parser.add_argument("-o",
                     dest="outpath",
                     help="path to output file",
 					required=True)
+parser.add_argument("-s",
+                    action="store",
+                    type=int,
+                    dest="seed",
+                    default=None,
+                    help="seed for reproducibility",
+                    required=False)
 args = parser.parse_args()
 N = args.N
 F = args.F
 K = args.K
+seed = args.seed
 outpath = args.outpath
 
 
 """ Put K random datasets in an array  """
+random.seed(seed)
 dsets = [Dataset(F) for x in range(K)]
 for k in range(K):
 	for i in range(N):

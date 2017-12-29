@@ -12,13 +12,13 @@
 /* Initializes the given pointer with a database */
 uint32_t obvdb_init(obvdb* db, FILE* src) {
 	
-	uint32_t f, m;
-	uint64_t i, j;
+	uint32_t f, m, i, j;
 	
 	char* ln;
 	char* tkn;
 	
-	uint64_t  N,F,M;
+	uint32_t    N,F;
+	uint64_t      M;
 	uint32_t*   dat;
 	uint64_t* szpfx;
 	
@@ -35,7 +35,7 @@ uint32_t obvdb_init(obvdb* db, FILE* src) {
 	tkn = strtok(NULL, ",");
 	M = atoll(tkn);
 	tkn = strtok(NULL, ",");
-	F = atoi(tkn);
+	F = atoll(tkn);
 	
 	/* Initialize arrays */
 	dat = (uint32_t*) malloc(M * sizeof(uint32_t));
@@ -79,17 +79,17 @@ void obvdb_destroy(obvdb* db) {
 }
 
 /* Number of features in observation i */
-uint32_t obvdb_obvsz(obvdb* db, uint64_t i) {
+uint32_t obvdb_obvsz(obvdb* db, uint32_t i) {
 	return db->_szpfx[i+1] - db->_szpfx[i];
 }
 
 /* Return pointer to i-th observation in this database */
-uint32_t* obvdb_getobv(obvdb* db, uint64_t i) {
+uint32_t* obvdb_getobv(obvdb* db, uint32_t i) {
 	return db->_dat + db->_szpfx[i];
 }
 
 /* Number of observations in this class */
-uint64_t obvdb_cnt(obvdb* db) {
+uint32_t obvdb_cnt(obvdb* db) {
 	return db->_N;
 }
 
