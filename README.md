@@ -1,7 +1,6 @@
 # mhash-c
-multithreaded implementation of MinHashing; written in C using pthreads.
 
-[about](#about) | [usage](#usage) | [input](#input) | [arguments](#arguments) | [resources](#resources) | [benchmarks](#benchmarks)
+**[about](#about) | [usage](#usage) | [input](#input) | [arguments](#arguments) | [benchmarks](#benchmarks) | [resources](#resources)**
 
 ![empirical-f480-n4000.png](http://tylerdaddio.com/imgs/empirical-f480-n4000.png)
 
@@ -19,9 +18,9 @@ The project is built using the [`make`](http://man7.org/linux/man-pages/man1/mak
 ```
 make
 ```
-to build the project. The following command will identify all pairs of similar vectors in `test/test1.csv` using a single thread.
+to build the project. The following command will identify all pairs of similar vectors in `bench/test.csv` using a single thread.
 ```
-cat test/test.csv | ./mhash -b 2 -r 10 -t 1 -E
+cat bench/test.csv | ./mhash -b 2 -r 10 -t 1 -E
 ```
 
 
@@ -53,11 +52,6 @@ arguments
 ```
 
 
-resources
--------
-[1] [Mining of Massive Datasets](http://www.mmds.org/), J. Leskovec et al.
-
-
 benchmarks
 -------
 The expected probability of any two vectors with similarity `s` being paired when using `b` bands and `r` rows is <code>1-(1-s<sup>r</sup>)<sup>b</sup></code><sup>[[1]](#resources)</sup>. A successful implementation must provide this theoretical guarantee. We verify this is the case with our implementation as follows:
@@ -87,3 +81,8 @@ We used the `--no-print` flag when running *mhash* to suppress outputting identi
 
 
 We have provided the necessary tools to repeat this analysis [here](https://github.com/CoderTheTyler/mhash-c/tree/master/bench). Raw data for the above graphs can be found [here](http://tylerdaddio.com/imgs/mhash-c_benchmarks.ods).
+
+
+resources
+-------
+[1] [Mining of Massive Datasets](http://www.mmds.org/), J. Leskovec et al.
