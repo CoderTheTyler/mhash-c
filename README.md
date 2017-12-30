@@ -9,7 +9,7 @@ Given a database of size `N` and a query vector of dimensionality `d`, the probl
 To remedy this, we can employ approximation methods. [Locality-Sensitive Hashing](https://en.wikipedia.org/wiki/Locality-sensitive_hashing) (LSH) is one such method. [MinHashing](http://gatekeeper.dec.com/ftp/pub/dec/SRC/publications/broder/positano-final-wpnums.pdf) is an LSH scheme which defines vector similarity using the [Jaccard similarity coefficient](https://en.wikipedia.org/wiki/Jaccard_index). This project provides a multithreaded implementation of MinHashing in C using the [pthreads](https://computing.llnl.gov/tutorials/pthreads/) library. A great explanation both of LSH and of MinHashing (as well as numerous other fantastic topics) can be found in the amazing text Mining of Massive Datasets<sup>[[1]](#resources)</sup>.. 
 
 
-performance
+benchmarks
 -------
 The expected probability of any two vectors with similarity `s` being paired when using `b` bands and `r` rows is <code>1-(1-s<sup>r</sup>)<sup>b</sup></code><sup>[[1]](#resources)</sup>. A successful implementation must provide this theoretical guarantee. We verify this is the case with our implementation as follows:
 
@@ -24,7 +24,18 @@ One would expect a larger dataset with higher dimensional vectors to yield a bet
 | ------------- | ------------- |
 | **_F = 96, N = 1000_** | **_F = 480, N = 4000_** |
 
-We have provided the necessary tools to repeat this analysis [here](https://github.com/CoderTheTyler/mhash-c/tree/master/test).
+We have also investigated timing requirements and peak memory usage of mhash over various settings and inputs. These are provided below. All memory results are provided in kilobytes (kB) and all timing results are provided in seconds. All benchmarking experiments were run on an Intel(R) Xeon(R) CPU E7-4850 v4 @ 2.10GHz with 1.5 TB of RAM using 64 "threads" of execution.
+
+| ![memory_usage-f96.png](http://tylerdaddio.com/imgs/memory_usage-f96.png) | ![memory_usage-f480.png](http://tylerdaddio.com/imgs/memory_usage-f480.png) |
+| ------------- | ------------- |
+| **_F = 96_** | **_F = 480_** |
+
+| ![time_actual-f96.png](http://tylerdaddio.com/imgs/time_actual-f96.png) | ![time_actual-f480.png](http://tylerdaddio.com/imgs/time_actual-f480.png) |
+| ------------- | ------------- |
+| **_F = 96_** | **_F = 480_** |
+
+
+We have provided the necessary tools to repeat this analysis [here](https://github.com/CoderTheTyler/mhash-c/tree/master/bench). Raw data for the above graphs can be found [here](http://tylerdaddio.com/imgs/mhash-c_benchmarks.ods).
 
 
 usage
