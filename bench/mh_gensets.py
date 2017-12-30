@@ -10,7 +10,7 @@ exists, then these datasets are appended to the end of it.
 from sys import argv
 import os
 import random
-from mhashtest import Dataset, Observation
+from pymhlib import Dataset, Observation
 import argparse
 
 

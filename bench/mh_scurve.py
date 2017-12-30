@@ -10,7 +10,7 @@ must be specified as well as the distribution is discreet.
 from sys import argv
 import os
 import random
-from mhashtest import Dataset, Observation
+from pymhlib import Dataset, Observation
 import argparse
 from math import floor
 
