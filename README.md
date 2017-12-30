@@ -1,6 +1,10 @@
 # mhash-c
 multithreaded implementation of MinHashing; written in C using pthreads.
 
+| ![empirical-f96-n1000.png](http://tylerdaddio.com/imgs/empirical-f96-n1000.png) | ![empirical-f480-n4000.png](http://tylerdaddio.com/imgs/empirical-f480-n4000.png) |
+| ------------- | ------------- |
+|  |  |
+
 
 about
 -------
@@ -24,7 +28,7 @@ One would expect a larger dataset with higher dimensional vectors to yield a bet
 | ------------- | ------------- |
 | **_F = 96, N = 1000_** | **_F = 480, N = 4000_** |
 
-We have also investigated timing requirements and peak memory usage of mhash over various settings and inputs. These are provided below. All memory results are provided in kilobytes (kB) and all timing results are provided in seconds. All benchmarking experiments were run on an Intel(R) Xeon(R) CPU E7-4850 v4 @ 2.10GHz with 1.5 TB of RAM using 64 "threads" of execution.
+We have also investigated timing requirements and peak memory usage of *mhash* over various settings and inputs. These are provided below. All memory results are provided in kilobytes (kB) and all timing results are provided in seconds. All benchmarking experiments were run on an Intel(R) Xeon(R) CPU E7-4850 v4 @ 2.10GHz with 1.5 TB of RAM using 64 "threads" of execution. We used the `--no-print` flag when running *mhash* to suppress outputting identified pairs. This was done to get a sense of how fast the implementation runs, not how long it takes to output all identified pairs, which can certainly be the bottleneck if all pairs are outputted. 
 
 | ![memory_usage-f96.png](http://tylerdaddio.com/imgs/memory_usage-f96.png) | ![memory_usage-f480.png](http://tylerdaddio.com/imgs/memory_usage-f480.png) |
 | ------------- | ------------- |
