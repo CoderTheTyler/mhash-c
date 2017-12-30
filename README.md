@@ -67,7 +67,7 @@ One would expect a larger dataset with higher dimensional vectors to yield a bet
 | ------------- | ------------- |
 | **_F = 96, N = 1000_** | **_F = 480, N = 4000_** |
 
-We have also investigated timing requirements and peak memory usage of *mhash* over various settings and inputs. These are provided below. All memory results are provided in kilobytes (kB) and all timing results are provided in seconds. All benchmarking experiments were run on an Intel(R) Xeon(R) CPU E7-4850 v4 @ 2.10GHz with 1.5 TB of RAM using 64 "threads" of execution. 
+We have also investigated timing requirements and peak memory usage of *mhash* over various settings and inputs. These are provided below. All memory results are provided in kilobytes (kB) and all timing results are provided in seconds. All benchmarking experiments were run on an Intel(R) Xeon(R) CPU E7-4850 v4 @ 2.10GHz with 1.5 TB of RAM. Only one thread was used per *mhash* instance.
 
 We used the `--no-print` flag when running *mhash* to suppress outputting identified pairs. The running time will be heavily influenced by the number of pairs *mhash* identifies and subsequently outputs, which can be quadratic in the size of the dataset in the worse case. The ouput quickly becomes the bottleneck when more than a number of pairs linear in the size of the input are identified. 
 
