@@ -136,7 +136,7 @@ for b in range(nbuckets):
 		ps[b] = ncalled[b] / buckets[b]
 print("similarity,proportion,called,total")
 for i in range(len(ps)):
-	print("{},{},{},{}".format(s[i], ps[i], ncalled[i], buckets[i]))
+	print("{},{}".format(s[i], ps[i]))
 if not outpath is None:
 	plt.plot(x,ps)
 	plt.ylim(0.0,1.0)

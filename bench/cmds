@@ -1,0 +1,49 @@
+../mhash -b 24 -r 5 -E -s 180255969 -t 1 < data_n4000_f480_k2.csv > result_n4000_f480_k2_b24_r5.csv
+python3 mh_scurve.py -d data_n4000_f480_k2.csv -p result_n4000_f480_k2_b24_r5.csv -b 20 -E -o result_n4000_f480_k2_b24_r5.png -m 0.5 -M 1.0 > result_n4000_f480_k2_b24_r5_scurve.csv
+
+../mhash -b 20 -r 6 -E -s 180255969 -t 1 < data_n4000_f480_k2.csv > result_n4000_f480_k2_b20_r6.csv
+python3 mh_scurve.py -d data_n4000_f480_k2.csv -p result_n4000_f480_k2_b20_r6.csv -b 20 -E -o result_n4000_f480_k2_b20_r6.png -m 0.5 -M 1.0 > result_n4000_f480_k2_b20_r6_scurve.csv
+
+../mhash -b 15 -r 8 -E -s 180255969 -t 1 < data_n4000_f480_k2.csv > result_n4000_f480_k2_b15_r8.csv
+python3 mh_scurve.py -d data_n4000_f480_k2.csv -p result_n4000_f480_k2_b15_r8.csv -b 20 -E -o result_n4000_f480_k2_b15_r8.png -m 0.5 -M 1.0 > result_n4000_f480_k2_b15_r8_scurve.csv
+
+../mhash -b 12 -r 10 -E -s 180255969 -t 1 < data_n4000_f480_k2.csv > result_n4000_f480_k2_b12_r10.csv
+python3 mh_scurve.py -d data_n4000_f480_k2.csv -p result_n4000_f480_k2_b12_r10.csv -b 20 -E -o result_n4000_f480_k2_b12_r10.png -m 0.5 -M 1.0 > result_n4000_f480_k2_b12_r10_scurve.csv
+
+../mhash -b 10 -r 12 -E -s 180255969 -t 1 < data_n4000_f480_k2.csv > result_n4000_f480_k2_b10_r12.csv
+python3 mh_scurve.py -d data_n4000_f480_k2.csv -p result_n4000_f480_k2_b10_r12.csv -b 20 -E -o result_n4000_f480_k2_b10_r12.png -m 0.5 -M 1.0 > result_n4000_f480_k2_b10_r12_scurve.csv
+
+../mhash -b 8 -r 15 -E -s 180255969 -t 1 < data_n4000_f480_k2.csv > result_n4000_f480_k2_b8_r15.csv
+python3 mh_scurve.py -d data_n4000_f480_k2.csv -p result_n4000_f480_k2_b8_r15.csv -b 20 -E -o result_n4000_f480_k2_b8_r15.png -m 0.5 -M 1.0 > result_n4000_f480_k2_b8_r15_scurve.csv
+
+../mhash -b 6 -r 20 -E -s 180255969 -t 1 < data_n4000_f480_k2.csv > result_n4000_f480_k2_b6_r20.csv
+python3 mh_scurve.py -d data_n4000_f480_k2.csv -p result_n4000_f480_k2_b6_r20.csv -b 20 -E -o result_n4000_f480_k2_b6_r20.png -m 0.5 -M 1.0 > result_n4000_f480_k2_b6_r20_scurve.csv
+
+../mhash -b 5 -r 24 -E -s 180255969 -t 1 < data_n4000_f480_k2.csv > result_n4000_f480_k2_b5_r24.csv
+python3 mh_scurve.py -d data_n4000_f480_k2.csv -p result_n4000_f480_k2_b5_r24.csv -b 20 -E -o result_n4000_f480_k2_b5_r24.png -m 0.5 -M 1.0 > result_n4000_f480_k2_b5_r24_scurve.csv
+
+../mhash -b 24 -r 5 -E -s 180255969 -t 1 < data_n1000_f96_k2.csv > result_n1000_f96_k2_b24_r5.csv
+python3 mh_scurve.py -d data_n1000_f96_k2.csv -p result_n1000_f96_k2_b24_r5.csv -b 20 -E -o result_n1000_f96_k2_b24_r5.png -m 0.5 -M 1.0 > result_n1000_f96_k2_b24_r5_scurve.csv
+
+../mhash -b 20 -r 6 -E -s 180255969 -t 1 < data_n1000_f96_k2.csv > result_n1000_f96_k2_b20_r6.csv
+python3 mh_scurve.py -d data_n1000_f96_k2.csv -p result_n1000_f96_k2_b20_r6.csv -b 20 -E -o result_n1000_f96_k2_b20_r6.png -m 0.5 -M 1.0 > result_n1000_f96_k2_b20_r6_scurve.csv
+
+../mhash -b 15 -r 8 -E -s 180255969 -t 1 < data_n1000_f96_k2.csv > result_n1000_f96_k2_b15_r8.csv
+python3 mh_scurve.py -d data_n1000_f96_k2.csv -p result_n1000_f96_k2_b15_r8.csv -b 20 -E -o result_n1000_f96_k2_b15_r8.png -m 0.5 -M 1.0 > result_n1000_f96_k2_b15_r8_scurve.csv
+
+../mhash -b 12 -r 10 -E -s 180255969 -t 1 < data_n1000_f96_k2.csv > result_n1000_f96_k2_b12_r10.csv
+python3 mh_scurve.py -d data_n1000_f96_k2.csv -p result_n1000_f96_k2_b12_r10.csv -b 20 -E -o result_n1000_f96_k2_b12_r10.png -m 0.5 -M 1.0 > result_n1000_f96_k2_b12_r10_scurve.csv
+
+../mhash -b 10 -r 12 -E -s 180255969 -t 1 < data_n1000_f96_k2.csv > result_n1000_f96_k2_b10_r12.csv
+python3 mh_scurve.py -d data_n1000_f96_k2.csv -p result_n1000_f96_k2_b10_r12.csv -b 20 -E -o result_n1000_f96_k2_b10_r12.png -m 0.5 -M 1.0 > result_n1000_f96_k2_b10_r12_scurve.csv
+
+../mhash -b 8 -r 15 -E -s 180255969 -t 1 < data_n1000_f96_k2.csv > result_n1000_f96_k2_b8_r15.csv
+python3 mh_scurve.py -d data_n1000_f96_k2.csv -p result_n1000_f96_k2_b8_r15.csv -b 20 -E -o result_n1000_f96_k2_b8_r15.png -m 0.5 -M 1.0 > result_n1000_f96_k2_b8_r15_scurve.csv
+
+../mhash -b 6 -r 20 -E -s 180255969 -t 1 < data_n1000_f96_k2.csv > result_n1000_f96_k2_b6_r20.csv
+python3 mh_scurve.py -d data_n1000_f96_k2.csv -p result_n1000_f96_k2_b6_r20.csv -b 20 -E -o result_n1000_f96_k2_b6_r20.png -m 0.5 -M 1.0 > result_n1000_f96_k2_b6_r20_scurve.csv
+
+../mhash -b 5 -r 24 -E -s 180255969 -t 1 < data_n1000_f96_k2.csv > result_n1000_f96_k2_b5_r24.csv
+python3 mh_scurve.py -d data_n1000_f96_k2.csv -p result_n1000_f96_k2_b5_r24.csv -b 20 -E -o result_n1000_f96_k2_b5_r24.png -m 0.5 -M 1.0 > result_n1000_f96_k2_b5_r24_scurve.csv
+
+
