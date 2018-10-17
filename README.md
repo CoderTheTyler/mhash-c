@@ -2,7 +2,7 @@
 
 **[about](#about) | [usage](#usage) | [input](#input) | [arguments](#arguments) | [benchmarks](#benchmarks) | [resources](#resources)**
 
-![empirical-f480-n4000.png](http://tylerdaddio.com/imgs/empirical-f480-n4000.png)
+![empirical-f480-n4000.png](https://raw.githubusercontent.com/imtjd/mhash-c/master/bench/imgs/empirical-f480-n4000.png)
 
 
 about
